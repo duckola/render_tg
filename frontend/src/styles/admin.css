@@ -1,0 +1,136 @@
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(148, 24, 29, 1) 0%, rgba(85, 5, 8, 1) 100%);
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+}
+
+.admin-sidebar {
+  width: 280px;
+  background-color: #5d0c1d;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-brand h1 {
+  margin: 0;
+}
+
+.brand-tekno {
+  font-weight: 800;
+  color: #fff;
+}
+
+.brand-grub {
+  font-weight: 800;
+  color: #f4c430;
+}
+
+.admin-user {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-user .user-name {
+  color: #f4c430;
+  font-weight: 700;
+}
+
+.admin-user .user-id {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-nav-link i {
+  width: 18px;
+  text-align: center;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f4c430;
+}
+
+.admin-nav-link.logout {
+  margin-top: 12px;
+  color: #ffdede;
+}
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-box i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+}
+
+.search-box input {
+  padding: 10px 12px 10px 32px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  min-width: 260px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 16px;
+  color: #fff;
+}
+
+.admin-content {
+  padding: 24px;
+}
+
+.admin-card {
+  background: #fff;
+  color: #333;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
