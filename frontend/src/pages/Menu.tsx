@@ -64,7 +64,10 @@ export const Menu = () => {
   const filteredItems = useMemo(() => {
     if (!menuItems) return [];
     return menuItems.filter((item: MenuItem) => {
-      const matchesSearch = searchQuery.trim() === '' || item.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const searchLower = searchQuery.trim().toLowerCase();
+      const matchesSearch = searchQuery.trim() === '' || 
+        item.name.toLowerCase().includes(searchLower) ||
+        (item.description && item.description.toLowerCase().includes(searchLower));
       const matchesCategory =
         selectedCategory === 'All' ||
         !selectedCategory ||
@@ -94,7 +97,6 @@ export const Menu = () => {
       if (direction === 'left') {
         targetScroll = Math.max(0, currentScroll - scrollAmount);
       } else {
-        // For right, ensure we can scroll to the end
         targetScroll = Math.min(maxScroll, currentScroll + scrollAmount);
       }
       
@@ -133,7 +135,6 @@ export const Menu = () => {
               behavior: 'smooth',
             });
           } else {
-            // For middle buttons, try to center them
             const containerRect = container.getBoundingClientRect();
             const buttonRect = buttonElement.getBoundingClientRect();
             const scrollLeft = container.scrollLeft;
@@ -141,7 +142,6 @@ export const Menu = () => {
             const containerCenterX = container.offsetWidth / 2;
             let targetScroll = scrollLeft + (buttonCenterX - containerCenterX);
             
-            // Ensure we don't scroll beyond the limits
             targetScroll = Math.max(0, Math.min(maxScroll, targetScroll));
             
             container.scrollTo({
@@ -220,12 +220,29 @@ export const Menu = () => {
         <div className="menu-topbar">
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search menu items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur();
+              }
+            }}
           />
-          <button>
-            <i className="fa-solid fa-magnifying-glass"></i> Search
+          <button 
+            onClick={() => {
+              if (searchQuery.trim()) {
+                setSearchQuery('');
+              }
+            }}
+            title={searchQuery.trim() ? 'Clear search' : 'Search'}
+          >
+            {searchQuery.trim() ? (
+              <i className="fa-solid fa-xmark"></i>
+            ) : (
+              <i className="fa-solid fa-magnifying-glass"></i>
+            )}
+            {searchQuery.trim() ? ' Clear' : ' Search'}
           </button>
         </div>
 

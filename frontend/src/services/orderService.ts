@@ -28,5 +28,10 @@ export const orderService = {
     const response = await apiClient.put<Order>(`/api/orders/${orderId}/status`, { status });
     return response.data;
   },
+
+  getTotalSpent: async (userId: number): Promise<{ totalSpent: number; totalOrders: number }> => {
+    const response = await apiClient.get<{ totalSpent: number; totalOrders: number }>(`/api/orders/user/${userId}/total-spent`);
+    return response.data;
+  },
 };
 

@@ -68,6 +68,23 @@ export const Settings = () => {
     enabled: !!user?.userId && showPaymentModal,
   });
 
+  const { data: userStats, isLoading: isLoadingStats, error: statsError } = useQuery({
+    queryKey: ['userStats', user?.userId],
+    queryFn: () => orderService.getTotalSpent(user!.userId),
+    enabled: !!user?.userId,
+  });
+
+  // Debug logging
+  useEffect(() => {
+    if (statsError) {
+      console.error('Error fetching user stats:', statsError);
+      toast.error('Failed to load activity summary');
+    }
+    if (userStats) {
+      console.log('User stats data:', userStats);
+    }
+  }, [userStats, statsError]);
+
   const createPaymentMethodMutation = useMutation({
     mutationFn: (payload: CreatePaymentMethodRequest) =>
       paymentMethodService.create(user!.userId, payload),
@@ -275,11 +292,15 @@ export const Settings = () => {
             <div className="activity-stats">
               <div className="stat-item">
                 <span className="stat-label">Total Orders</span>
-                <span className="stat-value">-</span>
+                <span className="stat-value">
+                  {isLoadingStats ? '...' : userStats ? userStats.totalOrders : '0'}
+                </span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">Total Spent</span>
-                <span className="stat-value">-</span>
+                <span className="stat-value">
+                  {isLoadingStats ? '...' : userStats ? `₱${(userStats.totalSpent || 0).toFixed(2)}` : '₱0.00'}
+                </span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">Member Since</span>

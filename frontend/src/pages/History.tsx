@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { orderService } from '../services/orderService';
+import { cartService } from '../services/cartService';
 import { canteenService } from '../services/canteenService';
 import { useAuthStore } from '../store/authStore';
 import { MenuHeader } from '../components/MenuHeader';
 import { MenuSidebar } from '../components/MenuSidebar';
 import { BasketSidebar } from '../components/BasketSidebar';
-import { Canteen } from '../types';
-import { Order } from '../types';
+import { Canteen, Order, OrderItem } from '../types';
+import toast from 'react-hot-toast';
 import '../styles/menu.css';
 import './History.css';
 
 export const History = () => {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCanteenId, setSelectedCanteenId] = useState<number | null>(null);
   const [selectedCanteenName, setSelectedCanteenName] = useState<string>('');
@@ -60,7 +62,7 @@ export const History = () => {
   ) || [];
 
   const cancelledOrders = orders?.filter((order: Order) => 
-    order.status === 'CANCELLED'
+    ['CANCELLED', 'CANCELED', 'DECLINED'].includes(order.status)
   ) || [];
 
   const formatDate = (dateString: string) => {
@@ -76,6 +78,65 @@ export const History = () => {
 
   const formatPrice = (price: number) => {
     return `P ${price.toFixed(2)}`;
+  };
+
+  const handleReorder = async (order: Order) => {
+    if (!user) {
+      toast.error('Please log in to reorder');
+      return;
+    }
+
+    const orderItems = order.orderItems || order.items || [];
+    
+    if (orderItems.length === 0) {
+      toast.error('No items to reorder');
+      return;
+    }
+
+    try {
+      let addedCount = 0;
+      let failedCount = 0;
+
+      // Add each item from the order back to the cart
+      for (const item of orderItems) {
+        try {
+          // Try menuItem.itemId first (if menuItem is populated), then fall back to itemId
+          const menuItemId = item.menuItem?.itemId || item.itemId;
+          
+          if (!menuItemId) {
+            console.error('Missing menuItemId in order item:', item);
+            failedCount++;
+            continue;
+          }
+
+          await cartService.addItemToCart(
+            user.userId,
+            menuItemId,
+            item.quantity || 1,
+            item.note || undefined
+          );
+          addedCount++;
+        } catch (itemError: any) {
+          console.error('Error adding item to cart:', itemError);
+          failedCount++;
+        }
+      }
+      
+      // Invalidate cart query to refresh the cart
+      queryClient.invalidateQueries({ queryKey: ['cart', user.userId] });
+      
+      if (addedCount > 0) {
+        toast.success(`${addedCount} item${addedCount > 1 ? 's' : ''} added to basket!`);
+        setIsBasketOpen(true); // Open the basket sidebar to show added items
+      }
+      
+      if (failedCount > 0) {
+        toast.error(`Failed to add ${failedCount} item${failedCount > 1 ? 's' : ''} to basket`);
+      }
+    } catch (error: any) {
+      console.error('Reorder error:', error);
+      toast.error(error?.response?.data?.message || 'Failed to add items to basket');
+    }
   };
 
   const handleTabChange = (tab: 'ongoing' | 'completed' | 'cancelled') => {
@@ -211,7 +272,12 @@ export const History = () => {
                       </div>
                     </div>
                     <div className="order-footer">
-                      <button className="reorder-btn">Reorder</button>
+                      <button 
+                        className="reorder-btn"
+                        onClick={() => handleReorder(order)}
+                      >
+                        Reorder
+                      </button>
                     </div>
                   </div>
                 ))

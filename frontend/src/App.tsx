@@ -94,10 +94,11 @@ function AppRoutes() {
         />
       </Route>
 
-      {/* Staff routes - Order management only */}
+      {/* Staff routes - Order management and notifications */}
       <Route element={<ProtectedRoute requireStaff />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin/orders" element={<OrdersPage />} />
+          <Route path="/admin/notifications" element={<AdminNotifications />} />
         </Route>
       </Route>
 

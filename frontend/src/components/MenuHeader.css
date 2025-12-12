@@ -1,0 +1,32 @@
+.notification-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  font-size: 1.2rem;
+  color: inherit;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc2626;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  border: 2px solid white;
+  min-width: 20px;
+  padding: 0 4px;
+}
+
+.notification-badge:has-text {
+  padding: 0 2px;
+}

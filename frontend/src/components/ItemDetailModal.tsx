@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { MenuItem } from '../types';
+import { MenuItem, Category } from '../types';
 import { cartService } from '../services/cartService';
+import { categoryService } from '../services/categoryService';
 import { useAuthStore } from '../store/authStore';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 interface ItemDetailModalProps {
@@ -18,6 +19,13 @@ export const ItemDetailModal = ({ item, isOpen, onClose }: ItemDetailModalProps)
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
+  // Fetch categories to get category name
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: categoryService.getAll,
+    enabled: isOpen, // Only fetch when modal is open
+  });
+
   useEffect(() => {
     if (item) {
       setQuantity(1);
@@ -27,6 +35,11 @@ export const ItemDetailModal = ({ item, isOpen, onClose }: ItemDetailModalProps)
   }, [item]);
 
   if (!item) return null;
+
+  // Get category name from categories list
+  const categoryName = item.categoryId
+    ? categories?.find((cat) => cat.categoryId === item.categoryId)?.categoryName || 'Uncategorized'
+    : 'Uncategorized';
 
   const basePrice = item.price;
   const riceAddonPrice = 15;
@@ -84,14 +97,23 @@ export const ItemDetailModal = ({ item, isOpen, onClose }: ItemDetailModalProps)
             <span className="popup-price">₱ {basePrice.toFixed(2)}</span>
           </div>
 
-          <p className="popup-category">Dish</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <p className="popup-category">{categoryName}</p>
+            {!item.isAvailable && (
+              <span style={{ 
+                padding: '4px 8px', 
+                backgroundColor: '#ff4444', 
+                color: 'white', 
+                borderRadius: '4px', 
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}>
+                Out of Stock
+              </span>
+            )}
+          </div>
 
           <p className="popup-desc">{item.description || 'No description available.'}</p>
-
-          <div className="section-title">
-            Ingredients <i className="fa-solid fa-chevron-up"></i>
-          </div>
-          <div className="ingredients-box">Secret Ingredients...</div>
 
           <div className="section-title">Add-ons</div>
           <div className="addon-row">
@@ -132,8 +154,16 @@ export const ItemDetailModal = ({ item, isOpen, onClose }: ItemDetailModalProps)
             </div>
           </div>
 
-          <button className="add-popup-btn" onClick={handleAddToBasket}>
-            Add to Basket
+          <button 
+            className="add-popup-btn" 
+            onClick={handleAddToBasket}
+            disabled={!item.isAvailable}
+            style={{ 
+              opacity: !item.isAvailable ? 0.6 : 1, 
+              cursor: !item.isAvailable ? 'not-allowed' : 'pointer' 
+            }}
+          >
+            {!item.isAvailable ? 'Out of Stock' : 'Add to Basket'}
           </button>
         </div>
       </div>

@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cartService } from '../services/cartService';
+import { notificationService } from '../services/notificationService';
 import { useAuthStore } from '../store/authStore';
 // BasketSidebar is handled in Menu.tsx to support onEditItem
 import { NotificationsModal } from './NotificationsModal';
+import './MenuHeader.css';
 
 interface MenuHeaderProps {
   isBasketOpen?: boolean;
@@ -21,7 +23,15 @@ export const MenuHeader = ({ isBasketOpen = false, onBasketOpen }: MenuHeaderPro
     enabled: !!user?.userId,
   });
 
+  const { data: notifications } = useQuery({
+    queryKey: ['notifications', user?.userId],
+    queryFn: () => notificationService.getByUserId(user!.userId),
+    enabled: !!user?.userId,
+    refetchInterval: 10000, // Refetch every 10 seconds
+  });
+
   const cartItemCount = cart?.cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const unreadCount = notifications?.filter(n => !n.isRead).length || 0;
 
   return (
     <>
@@ -35,10 +45,13 @@ export const MenuHeader = ({ isBasketOpen = false, onBasketOpen }: MenuHeaderPro
           <button 
             ref={notificationButtonRef}
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', position: 'relative' }}
+            className="notification-button"
             aria-label="Notifications"
           >
             <i className="fa-solid fa-bell"></i>
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+            )}
           </button>
           <i className="fa-solid fa-bars"></i>
         </div>

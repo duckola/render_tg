@@ -52,12 +52,18 @@ export const Notifications = () => {
 
   const getNotificationIcon = (type?: string) => {
     switch (type) {
-      case 'READY_FOR_PICKUP':
-        return 'fa-building';
-      case 'ORDER_IN_PROGRESS':
-        return 'fa-clock';
+      case 'ORDER_READY':
+        return 'fa-check-circle';
       case 'ORDER_CONFIRMED':
         return 'fa-check-circle';
+      case 'NEW_ORDER':
+        return 'fa-shopping-cart';
+      case 'LOW_STOCK':
+        return 'fa-exclamation-triangle';
+      case 'OUT_OF_STOCK':
+        return 'fa-times-circle';
+      case 'ORDER_IN_PROGRESS':
+        return 'fa-clock';
       case 'PICKED_UP':
         return 'fa-hand-holding';
       case 'PROMO':
@@ -69,9 +75,12 @@ export const Notifications = () => {
 
   const getNotificationTitle = (message: string, type?: string) => {
     // Extract title from message or use type-based title
-    if (type === 'READY_FOR_PICKUP') return 'Ready for Pick-Up';
-    if (type === 'ORDER_IN_PROGRESS') return 'Order in Progress';
+    if (type === 'ORDER_READY') return 'Order Ready';
     if (type === 'ORDER_CONFIRMED') return 'Order Confirmed';
+    if (type === 'NEW_ORDER') return 'New Order';
+    if (type === 'LOW_STOCK') return 'Low Stock Alert';
+    if (type === 'OUT_OF_STOCK') return 'Out of Stock';
+    if (type === 'ORDER_IN_PROGRESS') return 'Order in Progress';
     if (type === 'PICKED_UP') return 'Picked Up';
     if (type === 'PROMO') {
       // Try to extract promo title from message

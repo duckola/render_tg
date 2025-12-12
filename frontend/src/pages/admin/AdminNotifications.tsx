@@ -1,36 +1,68 @@
-import { useQuery } from '@tanstack/react-query';
-import { orderService } from '../../services/orderService';
-import { inventoryService } from '../../services/inventoryService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notificationService } from '../../services/notificationService';
+import { useAuthStore } from '../../store/authStore';
+import { Notification } from '../../types';
 import '../../styles/admin.css';
 import './AdminNotifications.css';
-
-interface Notification {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  type: string;
-}
+import toast from 'react-hot-toast';
 
 export const AdminNotifications = () => {
-  const { data: orders } = useQuery({
-    queryKey: ['orders'],
-    queryFn: orderService.getAllOrders,
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  const { data: notifications, isLoading } = useQuery({
+    queryKey: ['notifications', user?.userId],
+    queryFn: () => notificationService.getByUserId(user!.userId),
+    enabled: !!user?.userId,
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
-  const { data: inventory } = useQuery({
-    queryKey: ['inventory'],
-    queryFn: inventoryService.getAll,
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => notificationService.markAllAsRead(user!.userId),
+    onSuccess: () => {
+      toast.success('All notifications marked as read');
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.userId] });
+    },
+    onError: () => toast.error('Failed to mark notifications as read'),
   });
 
-  // Get order number format
-  const getOrderNumber = (orderId: number) => {
-    return `#${String(orderId).padStart(5, '0')}`;
+  const getNotificationIcon = (type?: string) => {
+    switch (type) {
+      case 'ORDER_READY':
+        return 'fa-check-circle';
+      case 'ORDER_CONFIRMED':
+        return 'fa-check-circle';
+      case 'NEW_ORDER':
+        return 'fa-shopping-cart';
+      case 'LOW_STOCK':
+        return 'fa-exclamation-triangle';
+      case 'OUT_OF_STOCK':
+        return 'fa-times-circle';
+      default:
+        return 'fa-bell';
+    }
+  };
+
+  const getNotificationTitle = (type?: string) => {
+    switch (type) {
+      case 'ORDER_READY':
+        return 'Order Ready';
+      case 'ORDER_CONFIRMED':
+        return 'Order Confirmed';
+      case 'NEW_ORDER':
+        return 'New Order';
+      case 'LOW_STOCK':
+        return 'Low Stock Alert';
+      case 'OUT_OF_STOCK':
+        return 'Out of Stock';
+      default:
+        return 'Notification';
+    }
   };
 
   // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       day: '2-digit',
@@ -39,71 +71,52 @@ export const AdminNotifications = () => {
     }).toUpperCase();
   };
 
-  // Generate notifications from orders and inventory
-  const notifications: Notification[] = [];
-
-  // New orders
-  const newOrders = orders?.filter((o) => o.status === 'Pending') || [];
-  newOrders.forEach((order) => {
-    notifications.push({
-      id: `order-${order.orderId}`,
-      title: `New Order ${getOrderNumber(order.orderId)}`,
-      description: `A new order has been placed: ₱${order.totalPrice?.toFixed(2) || '0.00'} - collect items for the customer.`,
-      date: formatDate(order.orderTime),
-      type: 'NEW_ORDER',
-    });
-  });
-
-  // Completed orders
-  const completedOrders = orders?.filter((o) => o.status === 'Completed') || [];
-  completedOrders.slice(0, 5).forEach((order) => {
-    notifications.push({
-      id: `completed-${order.orderId}`,
-      title: `Order ${getOrderNumber(order.orderId)} Completed`,
-      description: `Order ${getOrderNumber(order.orderId)} has been completed successfully.`,
-      date: formatDate(order.pickupTime || order.orderTime),
-      type: 'ORDER_COMPLETED',
-    });
-  });
-
-  // Low stock alerts
-  const lowStockItems = inventory?.filter((item) => item.status === 'Low Stock' || item.status === 'Out of Stock') || [];
-  lowStockItems.forEach((item) => {
-    notifications.push({
-      id: `stock-${item.inventoryId}`,
-      title: 'Low Stock Alert',
-      description: `${item.itemName} is low in stock - consider restocking soon.`,
-      date: formatDate(new Date().toISOString()),
-      type: 'LOW_STOCK',
-    });
-  });
-
-  // Sort by date (newest first)
-  notifications.sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
+  // Sort notifications by date (newest first)
+  const sortedNotifications = notifications 
+    ? [...notifications].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    : [];
   
   return (
     <div className="admin-notifications-page">
-      <h2 className="notifications-page-title">Notification</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 className="notifications-page-title">Notifications</h2>
+        {sortedNotifications.length > 0 && (
+          <button
+            onClick={() => markAllAsReadMutation.mutate()}
+            disabled={markAllAsReadMutation.isPending}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#666',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontSize: '0.9rem'
+            }}
+          >
+            Mark All As Read
+          </button>
+        )}
+      </div>
       <div className="admin-card notifications-card">
         <div className="notifications-list">
-          {notifications.length > 0 ? (
-            notifications.map((notification, index) => (
+          {isLoading ? (
+            <div className="no-notifications">Loading notifications...</div>
+          ) : sortedNotifications.length > 0 ? (
+            sortedNotifications.map((notification, index) => (
               <div
-                key={notification.id}
-                className={`notification-card ${index === 1 ? 'selected' : ''}`}
+                key={notification.notificationId}
+                className={`notification-card ${!notification.isRead ? 'unread' : ''} ${index === 0 ? 'selected' : ''}`}
               >
                 <div className="notification-card-left">
-                  <div className="notification-icon-red">
-                    <i className="fa-solid fa-exclamation-circle"></i>
+                  <div className={`notification-icon-red ${notification.type === 'OUT_OF_STOCK' ? 'out-of-stock' : ''}`}>
+                    <i className={`fa-solid ${getNotificationIcon(notification.type)}`}></i>
                   </div>
                   <div className="notification-card-content">
-                    <h3 className="notification-card-title">{notification.title}</h3>
-                    <p className="notification-card-description">{notification.description}</p>
+                    <h3 className="notification-card-title">{getNotificationTitle(notification.type)}</h3>
+                    <p className="notification-card-description">{notification.message}</p>
                   </div>
                 </div>
-                <div className="notification-card-date">{notification.date}</div>
+                <div className="notification-card-date">{formatDate(notification.timestamp)}</div>
               </div>
             ))
           ) : (

@@ -22,7 +22,7 @@
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 20px;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 /* Sales Overview Card */
@@ -70,7 +70,7 @@
 
 .sales-bar {
   height: 100%;
-  background: #F4C430;
+  background: #f4c430;
   border-radius: 10px;
   transition: width 0.3s ease;
 }
@@ -193,6 +193,7 @@
   border-radius: 6px;
   font-size: 0.95rem;
   background: white;
+  color: #550508;
 }
 
 .date-inputs {
@@ -226,7 +227,7 @@
 }
 
 .generate-btn {
-  background-color: #F4C430;
+  background-color: #f4c430;
   color: #550508;
   border: none;
   padding: 12px 24px;
@@ -256,4 +257,3 @@
     grid-column: 1;
   }
 }
-
